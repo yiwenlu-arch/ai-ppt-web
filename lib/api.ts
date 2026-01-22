@@ -5,7 +5,29 @@
 // 后端 API 基础 URL
 // 从环境变量获取，如果没有配置则使用默认值
 // Next.js 项目使用 process.env.NEXT_PUBLIC_* 来暴露环境变量到客户端
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+// 如果环境变量未设置，自动检测当前访问的服务器地址（支持局域网访问）
+function getApiBaseUrl(): string {
+  // 优先使用环境变量
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL
+  }
+  
+  // 如果未配置环境变量，自动检测当前访问的服务器地址
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname
+    // 如果是 localhost 或 127.0.0.1，使用默认值
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:5000'
+    }
+    // 否则使用当前访问的服务器地址（支持局域网访问）
+    return `http://${hostname}:5000`
+  }
+  
+  // 服务端渲染时使用默认值
+  return 'http://localhost:5000'
+}
+
+const API_BASE_URL = getApiBaseUrl()
 
 /**
  * 模板信息接口
