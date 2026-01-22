@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { MembershipSidebar } from "@/components/membership-sidebar"
@@ -12,7 +12,7 @@ import { MembershipMainContent } from "@/components/membership-main-content"
 import { ArrowLeft, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-export default function MembershipPage() {
+function MembershipContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<"welfare" | "coupons" | "subscription" | "security">("welfare")
@@ -66,7 +66,7 @@ export default function MembershipPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       {/* Top Bar */}
       <div className="border-b bg-background">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -88,6 +88,20 @@ export default function MembershipPage() {
         <MembershipSidebar activeTab={activeTab} />
         {renderContent()}
       </div>
+    </>
+  )
+}
+
+export default function MembershipPage() {
+  return (
+    <div className="min-h-screen bg-background">
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-muted-foreground">加载中...</div>
+        </div>
+      }>
+        <MembershipContent />
+      </Suspense>
     </div>
   )
 }
