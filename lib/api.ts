@@ -584,38 +584,73 @@ export async function getFiles(params: {
       }
     }
     
-    throw new Error(result.message || '获取文件列表失败')
-  } catch (error) {
-    // 如果 Supabase 未配置，回退到后端 API
-    if (error instanceof Error && error.message.includes('Supabase')) {
-      try {
-        const queryParams = new URLSearchParams()
-        if (params.page) queryParams.append('page', params.page.toString())
-        if (params.limit) queryParams.append('limit', params.limit.toString())
-        if (params.tab) queryParams.append('tab', params.tab)
-        if (params.search) queryParams.append('search', params.search)
-
-        const response = await fetch(`${API_BASE_URL}/api/files?${queryParams}`)
-        if (!response.ok) {
-          let errorMessage = '获取文件列表失败'
-          try {
-            const errorData = await response.json()
-            errorMessage = errorData.message || errorMessage
-          } catch {
-            errorMessage = `服务器错误: ${response.status} ${response.statusText}`
-          }
-          throw new Error(errorMessage)
-        }
-        return response.json()
-      } catch (fallbackError) {
-        if (fallbackError instanceof TypeError && fallbackError.message.includes('fetch')) {
-          throw new Error(`无法连接到后端服务器 (${API_BASE_URL})。请确保后端服务正在运行。`)
-        }
-        throw fallbackError
+    // 如果用户未登录，返回空列表而不是抛出错误
+    if (result.message === '未登录') {
+      return {
+        success: true,
+        data: {
+          files: [],
+          total: 0,
+          page: params.page || 1,
+          limit: params.limit || 20,
+          totalPages: 0,
+        },
       }
     }
     
+    // 其他错误，尝试回退到后端 API
+    throw new Error(result.message || '获取文件列表失败')
+  } catch (error) {
+    // 如果 Supabase 未配置或出错，回退到后端 API
     if (error instanceof Error) {
+      // 检查是否是 Supabase 配置问题
+      const isSupabaseError = 
+        error.message.includes('Supabase') || 
+        error.message.includes('未配置') ||
+        error.message.includes('获取文件列表失败')
+      
+      if (isSupabaseError) {
+        try {
+          const queryParams = new URLSearchParams()
+          if (params.page) queryParams.append('page', params.page.toString())
+          if (params.limit) queryParams.append('limit', params.limit.toString())
+          if (params.tab) queryParams.append('tab', params.tab)
+          if (params.search) queryParams.append('search', params.search)
+
+          const response = await fetch(`${API_BASE_URL}/api/files?${queryParams}`)
+          if (!response.ok) {
+            let errorMessage = '获取文件列表失败'
+            try {
+              const errorData = await response.json()
+              errorMessage = errorData.message || errorMessage
+            } catch {
+              errorMessage = `服务器错误: ${response.status} ${response.statusText}`
+            }
+            throw new Error(errorMessage)
+          }
+          return response.json()
+        } catch (fallbackError) {
+          if (fallbackError instanceof TypeError && fallbackError.message.includes('fetch')) {
+            throw new Error(`无法连接到后端服务器 (${API_BASE_URL})。请确保后端服务正在运行。`)
+          }
+          throw fallbackError
+        }
+      }
+      
+      // 如果是未登录错误，返回空列表
+      if (error.message === '未登录') {
+        return {
+          success: true,
+          data: {
+            files: [],
+            total: 0,
+            page: params.page || 1,
+            limit: params.limit || 20,
+            totalPages: 0,
+          },
+        }
+      }
+      
       throw error
     }
     throw new Error('网络错误，请检查后端服务是否运行')
