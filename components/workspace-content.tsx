@@ -493,9 +493,16 @@ export function WorkspaceContent() {
           if (!nextLine) continue
           
           if (nextLine.startsWith('##### ')) {
-            bodyContent = nextLine.substring(6).trim()
-            bodyLineNumber = j
-            hasBody = true
+            const rawBodyContent = nextLine.substring(6).trim()
+            // 过滤掉占位符文字
+            if (rawBodyContent && 
+                rawBodyContent !== '正文内容...' && 
+                rawBodyContent !== '正文内容' &&
+                !rawBodyContent.startsWith('正文内容')) {
+              bodyContent = rawBodyContent
+              bodyLineNumber = j
+              hasBody = true
+            }
             break
           } else if (nextLine.startsWith('####') || nextLine.startsWith('###') || nextLine.startsWith('##') || nextLine.startsWith('#')) {
             // 遇到更高级别的标题，说明没有正文内容
@@ -2516,7 +2523,11 @@ export function WorkspaceContent() {
                             >
                               <input
                                 type="text"
-                                value={item.bodyContent || ''}
+                                value={item.bodyContent && 
+                                       item.bodyContent !== '正文内容...' && 
+                                       item.bodyContent !== '正文内容' &&
+                                       !item.bodyContent.startsWith('正文内容') 
+                                       ? item.bodyContent : ''}
                                 onChange={(e) => {
                                   if (item.bodyLineNumber !== undefined) {
                                     updateMarkdownLine(item.bodyLineNumber, e.target.value, true)
@@ -2768,7 +2779,7 @@ export function WorkspaceContent() {
                                 >
                                   <input
                                     type="text"
-                                    value={item.bodyContent || ''}
+                                    value={item.bodyContent && item.bodyContent !== '正文内容...' && item.bodyContent !== '正文内容' ? item.bodyContent : ''}
                                     onChange={(e) => {
                                       // TODO: 实现更新逻辑（需要更新 outlineData）
                                       console.log('TODO: 更新 item.bodyContent', item.id, e.target.value)
