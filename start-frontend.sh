@@ -44,11 +44,12 @@ fi
 
 # 启动服务器
 echo "✅ 启动前端服务器..."
-echo "   访问地址: http://localhost:${PORT}"
+echo "   本地访问: http://localhost:${PORT}"
+echo "   局域网访问: http://$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo 'YOUR_IP'):${PORT}"
 echo "   后端API: http://localhost:5000"
 echo ""
 echo "按 Ctrl+C 停止服务器"
 echo ""
 
-# 使用环境变量指定端口和主机
-PORT=${PORT} HOSTNAME=127.0.0.1 pnpm dev
+# 使用环境变量指定端口和主机（0.0.0.0 允许局域网访问）
+PORT=${PORT} HOSTNAME=0.0.0.0 pnpm dev
